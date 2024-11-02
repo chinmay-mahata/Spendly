@@ -1,8 +1,8 @@
 const transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
-const formatter = new Intl.NumberFormat("en-IN", { // Change to 'en-IN' for Indian formatting
+const formatter = new Intl.NumberFormat("en-IN", { 
   style: "currency",
-  currency: "INR", // Change currency to Indian Rupee
+  currency: "INR", 
   signDisplay: "always",
 });
 
@@ -26,10 +26,9 @@ function updateTotal() {
 
   const balanceTotal = incomeTotal - expenseTotal;
 
-  // Display income as positive and expense as negative
-  balance.textContent = formatter.format(balanceTotal); // Positive or negative based on balance
-  income.textContent = formatter.format(incomeTotal); // Always positive
-  expense.textContent = formatter.format(-expenseTotal); // Display expense as negative
+  balance.textContent = formatter.format(balanceTotal); 
+  income.textContent = formatter.format(incomeTotal); 
+  expense.textContent = formatter.format(-expenseTotal); 
 }
 
 function renderList() {

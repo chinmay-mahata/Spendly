@@ -1,74 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spendly</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
     <h1>Spendly - Your Daily Expense Tracker</h1>
-
     <main>
-      <header>
-        <div>
-          <h5>Total Balance</h5>
-          <span id="balance">$0.00</span>
-        </div>
-        <div>
-          <h5>Income</h5>
-          <span id="income">$0.00</span>
-        </div>
-        <div>
-          <h5>Expense</h5>
-          <span id="expense">$0.00</span>
-        </div>
-      </header>
+        <header>
+            <div>
+                <h5>Income</h5>
+                <p id="income">₹0</p>
+            </div>
+            <div>
+                <h5>Expense</h5>
+                <p id="expense">₹0</p>
+            </div>
+            <div>
+                <h5>Balance</h5>
+                <p id="balance">₹0</p>
+            </div>
+        </header>
 
-      <section>
-        <h3>Transactions</h3>
-        <ul id="transactionList"></ul>
-        <div id="status"></div>
-      </section>
+        <section class="content-wrapper">
+            <div class="expense-data">
+                <form id="transactionForm">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Transaction Name" required>
+                    
+                    <label for="amount">Amount</label>
+                    <input type="number" id="amount" name="amount" placeholder="Transaction Amount" required>
+                    
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required>
+                    
+                    <label for="type">Transaction Type</label>
+                    <select id="type" name="type" class="styled-select" required>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    
+                    <button type="submit">Add Transaction</button>
+                </form>
 
-      <section>
-        <h3>Add Transaction</h3>
+                <h3 style="font-size: 1.15rem; font-weight: bold;">Transactions</h3>
+                <ul id="transactionList"></ul>
+                <p id="status">No transactions.</p>
+            </div>
 
-        <form id="transactionForm">
-          <div>
-            <label for="type">
-              <input type="checkbox" name="type" id="type" />
-              <div class="option">
-                <span>Expense</span>
-                <span>Income</span>
-              </div>
-            </label>
-          </div>
-          <div>
-            <label for="name">Name</label>
-            <input type="text" name="name" required />
-          </div>
-          <div>
-            <label for="amount">Amount</label>
-            <input
-              type="number"
-              name="amount"
-              value=""
-              min="0.00"
-              step="1.00"
-              required
-            />
-          </div>
-          <div>
-            <label for="date">Date</label>
-            <input type="date" name="date" required />
-          </div>
-          <button type="submit">Submit</button>
-        </form>
-      </section>
+            <div class="chart-container">
+                <h3 style="font-size: 1.25rem; font-weight: bold; text-align: center;">Expense Visualization</h3>
+                <canvas id="barGraph"></canvas>
+            </div>
+        </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
-  </body>
+</body>
 </html>

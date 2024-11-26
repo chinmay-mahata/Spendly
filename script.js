@@ -1,8 +1,8 @@
 const transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
-const formatter = new Intl.NumberFormat("en-IN", { 
+const formatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
-  currency: "INR", 
+  currency: "INR",
   signDisplay: "always",
 });
 
@@ -12,6 +12,9 @@ const status = document.getElementById("status");
 const balance = document.getElementById("balance");
 const income = document.getElementById("income");
 const expense = document.getElementById("expense");
+const barGraph = document.getElementById("barGraph");
+
+let chartInstance = null;
 
 form.addEventListener("submit", addTransaction);
 
@@ -26,48 +29,39 @@ function updateTotal() {
 
   const balanceTotal = incomeTotal - expenseTotal;
 
-  balance.textContent = formatter.format(balanceTotal); 
-  income.textContent = formatter.format(incomeTotal); 
-  expense.textContent = formatter.format(-expenseTotal); 
+  balance.textContent = formatter.format(balanceTotal);
+  income.textContent = formatter.format(incomeTotal);
+  expense.textContent = formatter.format(-expenseTotal);
 }
 
 function renderList() {
   list.innerHTML = "";
 
-  status.textContent = "";
   if (transactions.length === 0) {
     status.textContent = "No transactions.";
     return;
+  } else {
+    status.textContent = "";
   }
 
   transactions.forEach(({ id, name, amount, date, type }) => {
-    const sign = type === "income" ? 1 : -1;
-
     const li = document.createElement("li");
+    li.classList.add("transaction-item");
 
     li.innerHTML = `
-      <div class="name">
+      <div>
         <h4>${name}</h4>
         <p>${new Date(date).toLocaleDateString('en-GB')}</p>
       </div>
-
       <div class="amount ${type}">
-        <span>${formatter.format(amount * sign)}</span>
+        <span>${formatter.format(type === "income" ? amount : -amount)}</span>
       </div>
-    
-      <div class="action">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onclick="deleteTransaction(${id})">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
+      <button class="remove-btn" onclick="deleteTransaction(${id})">Remove</button>
     `;
 
     list.appendChild(li);
   });
 }
-
-renderList();
-updateTotal();
 
 function deleteTransaction(id) {
   const index = transactions.findIndex((trx) => trx.id === id);
@@ -76,6 +70,7 @@ function deleteTransaction(id) {
   updateTotal();
   saveTransactions();
   renderList();
+  renderGraph();
 }
 
 function addTransaction(e) {
@@ -84,22 +79,125 @@ function addTransaction(e) {
   const formData = new FormData(form);
 
   transactions.push({
-    id: Date.now(),  // Use timestamp as a unique ID
+    id: Date.now(),
     name: formData.get("name"),
     amount: parseFloat(formData.get("amount")),
-    date: new Date(formData.get("date")),
-    type: formData.get("type") === "on" ? "income" : "expense",
+    date: formData.get("date"),
+    type: formData.get("type"),
   });
 
   form.reset();
-
   updateTotal();
   saveTransactions();
   renderList();
+  renderGraph();
 }
 
 function saveTransactions() {
-  transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
   localStorage.setItem("transactions", JSON.stringify(transactions));
 }
+
+function renderGraph() {
+  const dates = [];
+  const incomes = [];
+  const expenses = [];
+  const remainingBalances = [];
+
+  
+  const groupedData = {};
+  transactions.forEach(({ date, amount, type }) => {
+    const formattedDate = new Date(date).toLocaleDateString("en-GB");
+    if (!groupedData[formattedDate]) groupedData[formattedDate] = { income: 0, expense: 0 };
+    groupedData[formattedDate][type] += amount;
+  });
+
+  
+  const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+
+  sortedDates.forEach((date) => {
+    dates.push(date);
+    incomes.push(groupedData[date].income);
+    expenses.push(groupedData[date].expense);
+    remainingBalances.push(groupedData[date].income - groupedData[date].expense);
+  });
+
+  const data = {
+    labels: dates,
+    datasets: [
+      {
+        label: "Income",
+        data: incomes,
+        backgroundColor: "rgba(89, 182, 249, 0.8)", 
+        borderColor: "rgba(89, 182, 249, 1)",
+        borderWidth: 1,
+        xAxisID: "bar-x-axis1",  
+        fill: false,
+        hoverBackgroundColor: "rgba(89, 182, 249, 1)",
+      },
+      {
+        label: "Expense",
+        data: expenses,
+        backgroundColor: "rgba(3, 90, 177, 0.8)", 
+        borderColor: "rgba(3, 90, 177, 1)",
+        borderWidth: 1,
+        xAxisID: "bar-x-axis2",  
+        fill: false,
+        hoverBackgroundColor: "rgba(3, 90, 177, 1)",
+      },
+    ],
+  };
+
+  if (chartInstance) {
+    chartInstance.destroy(); 
+  }
+
+  chartInstance = new Chart(barGraph, {
+    type: "bar",
+    data,
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const datasetIndex = context.datasetIndex;
+              const value = context.raw;
+              const balance = remainingBalances[context.dataIndex];
+
+              
+              if (datasetIndex === 0) {
+                return `Income: ₹${value.toFixed(2)}\nRemaining: ₹${balance.toFixed(2)}`;
+              }
+              if (datasetIndex === 1) {
+                return `Expense: ₹${value.toFixed(2)}\nRemaining: ₹${balance.toFixed(2)}`;
+              }
+              return '';
+            },
+          },
+        },
+        legend: {
+          position: "top",
+        },
+      },
+      scales: {
+        x: [{
+          id: "bar-x-axis1",  
+          stacked: false,
+          barThickness: 30,
+        }, {
+          id: "bar-x-axis2",  
+          stacked: false,
+          display: false,  
+          barThickness: 30,
+        }],
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+}
+
+renderList();
+updateTotal();
+renderGraph();
